@@ -12,6 +12,7 @@ export default function AdminOrdersPage() {
 
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState<Order | null>(null);
+  const [invoiceMode, setInvoiceMode] = useState<'customer' | 'package'>('customer');
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [trackingInput, setTrackingInput] = useState('');
 
@@ -123,7 +124,7 @@ export default function AdminOrdersPage() {
                         <option value="cancelled">CANCELLED</option>
                       </select>
                     </td>
-                    <td className="p-4 text-right space-x-2">
+                    <td className="p-4 text-right space-x-2 whitespace-nowrap">
                       <button
                         onClick={() => {
                           setEditingOrder(order);
@@ -134,10 +135,22 @@ export default function AdminOrdersPage() {
                         Tracking
                       </button>
                       <button
-                        onClick={() => setSelectedOrderForInvoice(order)}
-                        className="text-xs font-semibold text-[#C5A059] hover:text-[#9E7B32] bg-[#FBF7EE] border border-[#E8D5AA] px-2.5 py-1 rounded-md hover:bg-[#F4EFEA] cursor-pointer"
+                        onClick={() => {
+                          setInvoiceMode('customer');
+                          setSelectedOrderForInvoice(order);
+                        }}
+                        className="text-xs font-semibold text-[#9E7B32] hover:text-[#7A5E24] bg-[#FBF7EE] border border-[#E8D5AA] px-2.5 py-1 rounded-md hover:bg-[#F4EFEA] cursor-pointer"
                       >
-                        View Invoice
+                        Tax Invoice
+                      </button>
+                      <button
+                        onClick={() => {
+                          setInvoiceMode('package');
+                          setSelectedOrderForInvoice(order);
+                        }}
+                        className="text-xs font-semibold text-[#18181B] hover:text-black bg-white border border-black px-2.5 py-1 rounded-md hover:bg-gray-100 cursor-pointer shadow-2xs"
+                      >
+                        📦 Parcel Bill
                       </button>
                     </td>
                   </tr>
@@ -206,6 +219,7 @@ export default function AdminOrdersPage() {
       <InvoiceModal
         order={selectedOrderForInvoice}
         isOpen={!!selectedOrderForInvoice}
+        initialMode={invoiceMode}
         onClose={() => setSelectedOrderForInvoice(null)}
       />
     </div>

@@ -447,14 +447,19 @@ a {
   display: none;
 }
 
-/* ─── Dedicated Print Stylesheet for Luxury Invoices ──────────────── */
+/* ─── Dedicated Print Stylesheet for Luxury Invoices & Parcel Slips ──── */
 @media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   body {
     background-color: #FFFFFF !important;
     color: #000000 !important;
   }
 
-  header, footer, aside, nav, .no-print, button:not(.printable-content) {
+  header, footer, aside, nav, .no-print, button {
     display: none !important;
   }
 
@@ -464,15 +469,14 @@ a {
 
   .ciraaya-invoice-sheet {
     box-shadow: none !important;
-    border: none !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
     padding: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
   }
 
   @page {
-    margin: 1.5cm;
-    size: A4 portrait;
+    margin: 0.8cm;
+    size: auto;
   }
 }
