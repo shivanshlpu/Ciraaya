@@ -1,18 +1,23 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { getStoredSlides, BannerSlide, DEFAULT_SLIDES } from '@/lib/banner-config';
 import { handleImageError } from '@/lib/image-compressor';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 
 export function BannerSlider() {
   const [slides, setSlides] = useState<BannerSlide[]>(DEFAULT_SLIDES);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+
+  // Touch & Drag Swipe State
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const isDragging = useRef<boolean>(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load slides from storage & listen for live admin updates
+  // Load slides from storage & listen for live updates
   useEffect(() => {
     setSlides(getStoredSlides());
 
@@ -28,90 +33,178 @@ export function BannerSlider() {
     };
   }, []);
 
-  // Auto-play timer (slides every 4.5s unless hovered)
+  const goToPrev = useCallback(() => {
+    setCurrentIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+  }, [slides.length]);
+
+  const goToNext = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % slides.length);
+  }, [slides.length]);
+
+  // Calmer 6.5s auto-play timer (pauses when touching or hovering)
   useEffect(() => {
-    if (isHovered || slides.length <= 1) return;
+    if (isPaused || slides.length <= 1) return;
 
     timerRef.current = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % slides.length);
-    }, 4500);
+      goToNext();
+    }, 6500);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isHovered, slides.length, currentIndex]);
+  }, [isPaused, slides.length, goToNext]);
 
-  const handlePrev = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setCurrentIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+  // Touch Swipe Handlers (Mobile)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsPaused(true);
+    touchStartX.current = e.targetTouches[0].clientX;
+    touchEndX.current = e.targetTouches[0].clientX;
   };
 
-  const handleNext = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setCurrentIndex((prev) => (prev + 1) % slides.length);
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    setIsPaused(false);
+    if (!touchStartX.current || !touchEndX.current) return;
+    const distance = touchStartX.current - touchEndX.current;
+    const isLeftSwipe = distance > 40;
+    const isRightSwipe = distance < -40;
+
+    if (isLeftSwipe) {
+      goToNext();
+    } else if (isRightSwipe) {
+      goToPrev();
+    }
+
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
+
+  // Mouse Drag Handlers (Desktop)
+  const handleMouseDown = (e: React.MouseEvent) => {
+    isDragging.current = true;
+    touchStartX.current = e.clientX;
+    touchEndX.current = e.clientX;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging.current) return;
+    touchEndX.current = e.clientX;
+  };
+
+  const handleMouseUp = () => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    if (touchStartX.current && touchEndX.current) {
+      const distance = touchStartX.current - touchEndX.current;
+      if (distance > 40) goToNext();
+      if (distance < -40) goToPrev();
+    }
+    touchStartX.current = null;
+    touchEndX.current = null;
   };
 
   if (!slides || slides.length === 0) return null;
 
-  const currentSlide = slides[currentIndex] || slides[0];
-
   return (
-    <section className="py-3 sm:py-5">
+    <section className="py-2.5 sm:py-4">
       <div className="container-main">
         <div
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          className="group relative w-full h-[190px] sm:h-[280px] md:h-[360px] lg:h-[420px] rounded-2xl md:rounded-3xl overflow-hidden border border-[#EBE6DF] shadow-xs bg-[#FAFAF8]"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => {
+            setIsPaused(false);
+            isDragging.current = false;
+          }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          className="group relative w-full h-[180px] sm:h-[260px] md:h-[340px] lg:h-[400px] rounded-xl sm:rounded-2xl md:rounded-3xl overflow-hidden border border-[#EBE6DF] shadow-xs select-none cursor-grab active:cursor-grabbing bg-[#FAFAF8]"
         >
-          {/* Active Banner Image with Link */}
-          <Link
-            href={currentSlide.linkUrl || '/shop'}
-            className="block w-full h-full relative"
+          {/* ═══ Horizontal Sliding Track (Real Flipkart / Myntra Sliding) ═══ */}
+          <div
+            className="flex w-full h-full transition-transform duration-500 ease-out"
+            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
           >
             {slides.map((slide, idx) => (
-              <img
+              <div
                 key={slide.id || idx}
-                src={slide.imageUrl}
-                alt={slide.title || `Ciraaya Banner ${idx + 1}`}
-                onError={handleImageError}
-                className={`
-                  absolute inset-0 w-full h-full object-cover object-center transition-all duration-700 ease-out
-                  ${idx === currentIndex ? 'opacity-100 scale-100 z-10' : 'opacity-0 scale-102 pointer-events-none z-0'}
-                `}
-                loading={idx === 0 ? 'eager' : 'lazy'}
-              />
-            ))}
-          </Link>
+                className="w-full h-full shrink-0 relative overflow-hidden"
+              >
+                <Link
+                  href={slide.linkUrl || '/shop'}
+                  className="block w-full h-full relative"
+                  onClick={(e) => {
+                    // Prevent accidental navigation during touch swipe
+                    if (touchStartX.current && touchEndX.current && Math.abs(touchStartX.current - touchEndX.current) > 10) {
+                      e.preventDefault();
+                    }
+                  }}
+                >
+                  <img
+                    src={slide.imageUrl}
+                    alt={slide.title || `Ciraaya Banner ${idx + 1}`}
+                    onError={handleImageError}
+                    className="w-full h-full object-cover object-center pointer-events-none"
+                    loading={idx === 0 ? 'eager' : 'lazy'}
+                  />
 
-          {/* Left Arrow Button */}
+                  {/* Clean, Human-Crafted Editorial Campaign Badge */}
+                  <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-10 pointer-events-none">
+                    <div className="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full border border-[#EBE6DF] shadow-xs flex items-center gap-1.5">
+                      <Sparkles className="w-3 h-3 text-[#C5A059]" />
+                      <span className="text-[9px] sm:text-[10px] font-bold text-[#18181B] tracking-wider uppercase">
+                        {slide.badge || 'Curated Everyday Luxury'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Subtle Gradient Shadow for depth */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-black/10 pointer-events-none" />
+                </Link>
+              </div>
+            ))}
+          </div>
+
+          {/* ═══ Left Navigation Button (Always visible on mobile & desktop) ═══ */}
           {slides.length > 1 && (
             <button
               type="button"
-              onClick={handlePrev}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/85 hover:bg-white text-[#18181B] shadow-md border border-[#EBE6DF] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-20 cursor-pointer"
-              aria-label="Previous slide"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                goToPrev();
+              }}
+              className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-white/90 hover:bg-white text-[#18181B] shadow-sm border border-[#EBE6DF] flex items-center justify-center transition-all duration-200 z-20 cursor-pointer"
+              aria-label="Previous banner"
             >
               <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           )}
 
-          {/* Right Arrow Button */}
+          {/* ═══ Right Navigation Button (Always visible on mobile & desktop) ═══ */}
           {slides.length > 1 && (
             <button
               type="button"
-              onClick={handleNext}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/85 hover:bg-white text-[#18181B] shadow-md border border-[#EBE6DF] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-20 cursor-pointer"
-              aria-label="Next slide"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                goToNext();
+              }}
+              className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-white/90 hover:bg-white text-[#18181B] shadow-sm border border-[#EBE6DF] flex items-center justify-center transition-all duration-200 z-20 cursor-pointer"
+              aria-label="Next banner"
             >
               <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           )}
 
-          {/* Bottom Timer Slider Dots Indicator */}
+          {/* ═══ Bottom Pagination Indicators ═══ */}
           {slides.length > 1 && (
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 bg-black/35 backdrop-blur-xs px-3 py-1.5 rounded-full border border-white/20">
+            <div className="absolute bottom-2.5 sm:bottom-3.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded-full border border-[#EBE6DF]/80 shadow-2xs">
               {slides.map((_, idx) => (
                 <button
                   key={idx}
@@ -122,8 +215,8 @@ export function BannerSlider() {
                     setCurrentIndex(idx);
                   }}
                   className={`
-                    h-1.5 rounded-full transition-all duration-300 cursor-pointer
-                    ${idx === currentIndex ? 'w-6 bg-[#C5A059]' : 'w-1.5 bg-white/70 hover:bg-white'}
+                    h-1 rounded-full transition-all duration-300 cursor-pointer
+                    ${idx === currentIndex ? 'w-5 bg-[#C5A059]' : 'w-1 bg-[#A1A1AA]/60 hover:bg-[#71717A]'}
                   `}
                   aria-label={`Go to slide ${idx + 1}`}
                 />

@@ -7,32 +7,37 @@ export interface BannerSlide {
   imageUrl: string;
   linkUrl: string;
   title?: string;
+  badge?: string;
 }
 
 export const DEFAULT_SLIDES: BannerSlide[] = [
   {
     id: 'slide-1',
-    imageUrl: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=1600',
+    imageUrl: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&q=80&w=1600',
     linkUrl: '/shop',
-    title: 'Waterproof & Anti-Tarnish Daily Chains',
+    title: 'Everyday Waterproof Jewellery',
+    badge: '100% WATERPROOF & ANTI-TARNISH',
   },
   {
     id: 'slide-2',
     imageUrl: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&q=80&w=1600',
     linkUrl: '/category/earrings',
     title: 'Aesthetic Everyday Hoops & Studs',
+    badge: '100% SKIN-SAFE & HYPOALLERGENIC',
   },
   {
     id: 'slide-3',
     imageUrl: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&q=80&w=1600',
     linkUrl: '/category/rings',
     title: 'Never-Turn-Green Stacking Rings',
+    badge: 'SWEAT & SHOWER PROOF',
   },
   {
     id: 'slide-4',
     imageUrl: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&q=80&w=1600',
     linkUrl: '/category/bridal',
     title: 'Regal Bridal & Festive Choker Sets',
+    badge: 'FESTIVE STATEMENT EDIT',
   },
 ];
 
