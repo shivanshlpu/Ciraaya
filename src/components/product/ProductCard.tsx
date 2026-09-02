@@ -7,7 +7,6 @@ import { Product } from '@/types/database';
 import { useWishlist } from '@/context/WishlistContext';
 import { useCart } from '@/context/CartContext';
 import { handleImageError, DEFAULT_FALLBACK_IMAGE } from '@/lib/image-compressor';
-
 import { Star } from 'lucide-react';
 
 interface ProductCardProps {
@@ -46,9 +45,9 @@ export function ProductCard({ product, priorityImage = false }: ProductCardProps
   };
 
   return (
-    <div className="ciraaya-card group relative flex flex-col h-full bg-white rounded-2xl border border-[#EBE6DF] overflow-hidden hover:border-[#C5A059] hover:shadow-md transition-all duration-300">
-      {/* ─── 1. Image & Badges Container ────────────────── */}
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#FAFAF8]">
+    <div className="ciraaya-card group relative flex flex-col h-full bg-white rounded-xl sm:rounded-2xl border border-[#EBE6DF] overflow-hidden hover:border-[#C5A059] hover:shadow-sm transition-all duration-300">
+      {/* ─── 1. Image & Badges Container (Compact Aspect Ratio) ────────── */}
+      <div className="relative aspect-square sm:aspect-[4/5] w-full overflow-hidden bg-[#FAFAF8]">
         <Link href={`/product/${product.slug}`} className="block w-full h-full relative">
           {/* Skeleton Shimmer while loading */}
           {!imageLoaded && (
@@ -80,14 +79,14 @@ export function ProductCard({ product, priorityImage = false }: ProductCardProps
         </Link>
 
         {/* Badges */}
-        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 pointer-events-none z-10">
+        <div className="absolute top-2 left-2 flex flex-col gap-1 pointer-events-none z-10">
           {discountPercent && (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#C5A059] text-white shadow-xs">
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#C5A059] text-white shadow-xs">
               {discountPercent}% OFF
             </span>
           )}
           {product.tags?.includes('bestseller') && (
-            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#18181B] text-white uppercase tracking-wider">
+            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-[#18181B] text-white uppercase tracking-wider">
               Bestseller
             </span>
           )}
@@ -102,7 +101,7 @@ export function ProductCard({ product, priorityImage = false }: ProductCardProps
             toggleWishlist(product);
           }}
           className={`
-            absolute top-2.5 right-2.5 w-7 h-7 sm:w-8 sm:h-8 rounded-full
+            absolute top-2 right-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full
             flex items-center justify-center
             transition-all duration-200 cursor-pointer z-10 shadow-xs
             border border-[#EBE6DF]
@@ -115,8 +114,8 @@ export function ProductCard({ product, priorityImage = false }: ProductCardProps
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
         >
           <svg
-            width="14"
-            height="14"
+            width="12"
+            height="12"
             viewBox="0 0 24 24"
             fill={isWishlisted ? 'currentColor' : 'none'}
             stroke="currentColor"
@@ -127,55 +126,55 @@ export function ProductCard({ product, priorityImage = false }: ProductCardProps
         </button>
       </div>
 
-      {/* ─── 2. Product Info Area ──────────────────────── */}
-      <div className="p-3.5 sm:p-4 flex flex-col flex-1 bg-white justify-between">
+      {/* ─── 2. Compact Product Info Area ─────────────────────────────── */}
+      <div className="p-2.5 sm:p-3 flex flex-col flex-1 bg-white justify-between">
         <div>
           {/* Material & Rating Row */}
-          <div className="flex items-center justify-between text-xs mb-1.5">
-            <span className="text-[9px] uppercase font-bold tracking-wider text-[#9E7B32] bg-[#FBF7EE] border border-[#E8D5AA] px-1.5 py-0.5 rounded">
+          <div className="flex items-center justify-between text-[10px] mb-1">
+            <span className="text-[8px] uppercase font-bold tracking-wider text-[#9E7B32] bg-[#FBF7EE] border border-[#E8D5AA] px-1 py-0.2 rounded">
               {product.material}
             </span>
-            <div className="flex items-center gap-1 text-[11px] text-[#71717A] font-medium">
+            <div className="flex items-center gap-0.5 text-[10px] text-[#71717A] font-medium">
               <Star className="w-2.5 h-2.5 fill-[#C5A059] text-[#C5A059]" />
               <span className="text-[#18181B] font-bold">{product.rating.toFixed(1)}</span>
-              <span className="text-[10px]">({product.review_count})</span>
+              <span className="text-[9px]">({product.review_count})</span>
             </div>
           </div>
 
           {/* Title */}
-          <Link href={`/product/${product.slug}`} className="block group-hover:text-[#C5A059] transition-colors mb-2">
-            <h3 className="text-xs sm:text-sm font-semibold text-[#18181B] line-clamp-2 leading-snug">
+          <Link href={`/product/${product.slug}`} className="block group-hover:text-[#C5A059] transition-colors mb-1.5">
+            <h3 className="text-xs font-semibold text-[#18181B] truncate leading-tight">
               {product.name}
             </h3>
           </Link>
         </div>
 
         {/* Price & Action Buttons */}
-        <div className="pt-2.5 border-t border-[#EBE6DF] space-y-2.5">
-          <div className="flex items-baseline gap-2">
-            <span className="text-sm sm:text-base font-bold text-[#18181B] tracking-tight">
+        <div className="pt-2 border-t border-[#EBE6DF] space-y-2">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-xs sm:text-sm font-bold text-[#18181B] tracking-tight">
               ₹{(product.discount_price || product.price).toLocaleString('en-IN')}
             </span>
             {product.discount_price && (
-              <span className="text-xs text-[#A1A1AA] line-through">
+              <span className="text-[10px] sm:text-xs text-[#A1A1AA] line-through">
                 ₹{product.price.toLocaleString('en-IN')}
               </span>
             )}
           </div>
 
           {/* Action Buttons: Add to Bag & Buy Now */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1.5">
             <button
               type="button"
               onClick={handleQuickAdd}
-              className="py-1.5 px-2 bg-[#FAFAF8] hover:bg-[#EBE6DF] text-[#18181B] border border-[#EBE6DF] text-[11px] font-semibold rounded-lg transition-colors cursor-pointer"
+              className="py-1 px-1 bg-[#FAFAF8] hover:bg-[#EBE6DF] text-[#18181B] border border-[#EBE6DF] text-[10px] font-semibold rounded-md transition-colors cursor-pointer text-center"
             >
-              Add to Bag
+              Add
             </button>
             <button
               type="button"
               onClick={handleBuyNow}
-              className="py-1.5 px-2 bg-[#18181B] hover:bg-[#C5A059] text-white text-[11px] font-bold rounded-lg transition-colors cursor-pointer"
+              className="py-1 px-1 bg-[#18181B] hover:bg-[#C5A059] text-white text-[10px] font-bold rounded-md transition-colors cursor-pointer text-center"
             >
               Buy Now
             </button>

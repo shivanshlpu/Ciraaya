@@ -5,6 +5,7 @@ import { useStore } from '@/context/StoreContext';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { compressImageFile, handleImageError, DEFAULT_FALLBACK_IMAGE } from '@/lib/image-compressor';
+import { Product } from '@/types/database';
 
 export default function AdminProductsPage() {
   const { products, categories, addProduct, deleteProduct, updateProduct } = useStore();
@@ -12,23 +13,22 @@ export default function AdminProductsPage() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [compressionStatus, setCompressionStatus] = useState<string | null>(null);
 
-  // Add Product Form State with Multi-Image Support
+  // Form State with Multi-Image Support
   const [form, setForm] = useState({
     name: '',
-    material: 'Gold Plated',
+    material: 'Waterproof',
     category_id: categories[0]?.id || '',
     price: 1999,
     discount_price: 1499,
     stock_qty: 20,
     tags: 'waterproof, daily-wear',
     description: '',
-    imageUrls: [
-      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=800',
-    ],
+    imageUrls: [DEFAULT_FALLBACK_IMAGE],
     newUrlInput: '',
   });
 
@@ -38,6 +38,42 @@ export default function AdminProductsPage() {
     const matchesCategory = selectedCategory === 'all' || p.category_id === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const handleOpenAdd = () => {
+    setEditingProductId(null);
+    setForm({
+      name: '',
+      material: 'Waterproof',
+      category_id: categories[0]?.id || '',
+      price: 1999,
+      discount_price: 1499,
+      stock_qty: 20,
+      tags: 'waterproof, daily-wear',
+      description: '',
+      imageUrls: [DEFAULT_FALLBACK_IMAGE],
+      newUrlInput: '',
+    });
+    setCompressionStatus(null);
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (p: Product) => {
+    setEditingProductId(p.id);
+    setForm({
+      name: p.name,
+      material: p.material,
+      category_id: p.category_id || categories[0]?.id || '',
+      price: p.price,
+      discount_price: p.discount_price || 0,
+      stock_qty: p.stock_qty,
+      tags: p.tags?.join(', ') || '',
+      description: p.description || '',
+      imageUrls: p.images && p.images.length > 0 ? p.images.map((img) => img.image_url) : [DEFAULT_FALLBACK_IMAGE],
+      newUrlInput: '',
+    });
+    setCompressionStatus(null);
+    setShowModal(true);
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -97,7 +133,7 @@ export default function AdminProductsPage() {
     }));
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!form.name.trim()) {
@@ -110,53 +146,66 @@ export default function AdminProductsPage() {
       return;
     }
 
-    const slug = form.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
     const tagList = form.tags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean);
 
-    const newProduct = {
-      name: form.name.trim(),
-      slug,
-      description: form.description || 'Waterproof, anti-tarnish, and skin-safe everyday jewellery handcrafted for effortless luxury.',
-      category_id: form.category_id,
-      category: categories.find((c) => c.id === form.category_id) || null,
-      material: form.material,
-      price: Number(form.price),
-      discount_price: form.discount_price ? Number(form.discount_price) : null,
-      stock_qty: Number(form.stock_qty),
-      sku: `CIR-${Math.floor(1000 + Math.random() * 9000)}`,
-      is_featured: true,
-      is_active: true,
-      tags: tagList,
-      rating: 5.0,
-      review_count: 1,
-      images: form.imageUrls.map((url, idx) => ({
-        id: `img-${Date.now()}-${idx}`,
-        product_id: '',
-        image_url: url,
-        sort_order: idx,
-      })),
-      details: [
-        { label: 'Feature', value: '100% Waterproof & Anti-Tarnish' },
-        { label: 'Skin-Safe', value: '100% Hypoallergenic (Nickel Free)' },
-      ],
-    };
+    if (editingProductId) {
+      // Update Existing Product
+      updateProduct(editingProductId, {
+        name: form.name.trim(),
+        material: form.material,
+        category_id: form.category_id,
+        category: categories.find((c) => c.id === form.category_id) || null,
+        price: Number(form.price),
+        discount_price: form.discount_price ? Number(form.discount_price) : null,
+        stock_qty: Number(form.stock_qty),
+        tags: tagList,
+        description: form.description,
+        images: form.imageUrls.map((url, idx) => ({
+          id: `img-${Date.now()}-${idx}`,
+          product_id: editingProductId,
+          image_url: url,
+          sort_order: idx,
+        })),
+      });
 
-    await addProduct(newProduct);
-    addToast(`"${form.name}" has been created & published!`, 'success');
-    setShowAddModal(false);
-    setForm({
-      name: '',
-      material: 'Gold Plated',
-      category_id: categories[0]?.id || '',
-      price: 1999,
-      discount_price: 1499,
-      stock_qty: 20,
-      tags: 'waterproof, daily-wear',
-      description: '',
-      imageUrls: [DEFAULT_FALLBACK_IMAGE],
-      newUrlInput: '',
-    });
-    setCompressionStatus(null);
+      addToast(`"${form.name}" has been updated successfully!`, 'success');
+    } else {
+      // Create New Product
+      const slug = form.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+
+      const newProduct = {
+        name: form.name.trim(),
+        slug,
+        description: form.description || 'Waterproof, anti-tarnish, and skin-safe everyday jewellery handcrafted for effortless luxury.',
+        category_id: form.category_id,
+        category: categories.find((c) => c.id === form.category_id) || null,
+        material: form.material,
+        price: Number(form.price),
+        discount_price: form.discount_price ? Number(form.discount_price) : null,
+        stock_qty: Number(form.stock_qty),
+        sku: `CIR-${Math.floor(1000 + Math.random() * 9000)}`,
+        is_featured: true,
+        is_active: true,
+        tags: tagList,
+        rating: 5.0,
+        review_count: 1,
+        images: form.imageUrls.map((url, idx) => ({
+          id: `img-${Date.now()}-${idx}`,
+          product_id: '',
+          image_url: url,
+          sort_order: idx,
+        })),
+        details: [
+          { label: 'Feature', value: '100% Waterproof & Anti-Tarnish' },
+          { label: 'Skin-Safe', value: '100% Hypoallergenic (Nickel Free)' },
+        ],
+      };
+
+      await addProduct(newProduct);
+      addToast(`"${form.name}" has been created & published!`, 'success');
+    }
+
+    setShowModal(false);
   };
 
   return (
@@ -171,11 +220,11 @@ export default function AdminProductsPage() {
             Products &amp; Inventory ({products.length})
           </h1>
           <p className="text-xs text-[#71717A] mt-1">
-            Manage catalogue, upload optimized photos, and adjust pricing.
+            Edit existing pieces, upload optimized photos, or add new items.
           </p>
         </div>
 
-        <Button onClick={() => setShowAddModal(true)} size="sm">
+        <Button onClick={handleOpenAdd} size="sm">
           + Add New Piece
         </Button>
       </div>
@@ -254,9 +303,20 @@ export default function AdminProductsPage() {
                         {p.is_active ? 'Active' : 'Inactive'}
                       </button>
                     </td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3 px-4 text-right space-x-3">
                       <button
-                        onClick={() => deleteProduct(p.id)}
+                        onClick={() => handleOpenEdit(p)}
+                        className="text-xs text-[#C5A059] hover:underline font-semibold cursor-pointer"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to delete "${p.name}"?`)) {
+                            deleteProduct(p.id);
+                            addToast(`"${p.name}" has been deleted.`, 'info');
+                          }
+                        }}
                         className="text-xs text-[#C53030] hover:underline font-semibold cursor-pointer"
                       >
                         Delete
@@ -270,21 +330,23 @@ export default function AdminProductsPage() {
         </div>
       </div>
 
-      {/* Add Product Modal with Multi-Image & Compressor */}
-      {showAddModal && (
+      {/* Add / Edit Product Modal */}
+      {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#18181B]/50 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl border border-[#EBE6DF] shadow-2xl p-6 sm:p-8 max-w-xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-[#EBE6DF] pb-3 mb-4">
-              <h3 className="text-base font-bold text-[#18181B]">Add New Jewellery Piece</h3>
+              <h3 className="text-base font-bold text-[#18181B]">
+                {editingProductId ? 'Edit Jewellery Piece' : 'Add New Jewellery Piece'}
+              </h3>
               <button
-                onClick={() => setShowAddModal(false)}
+                onClick={() => setShowModal(false)}
                 className="w-7 h-7 flex items-center justify-center rounded text-[#71717A] hover:text-[#18181B] cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleCreate} className="space-y-4 text-xs">
+            <form onSubmit={handleSubmit} className="space-y-4 text-xs">
               <div>
                 <label className="font-semibold text-[#18181B] block mb-1">Product Title *</label>
                 <input
@@ -366,7 +428,7 @@ export default function AdminProductsPage() {
                     Product Images ({form.imageUrls.length})
                   </label>
                   <span className="text-[10px] text-[#2A7A4C] font-semibold bg-[#EFF8F2] px-2 py-0.5 rounded">
-                    ⚡ Auto WebP Compressed
+                    Auto WebP Compressed
                   </span>
                 </div>
 
@@ -466,9 +528,9 @@ export default function AdminProductsPage() {
 
               <div className="flex gap-3 pt-3">
                 <Button type="submit" fullWidth size="sm">
-                  Save &amp; Publish Piece
+                  {editingProductId ? 'Save & Update Piece' : 'Save & Publish Piece'}
                 </Button>
-                <Button type="button" variant="ghost" fullWidth size="sm" onClick={() => setShowAddModal(false)}>
+                <Button type="button" variant="ghost" fullWidth size="sm" onClick={() => setShowModal(false)}>
                   Cancel
                 </Button>
               </div>
