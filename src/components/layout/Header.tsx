@@ -460,67 +460,101 @@ export function Header() {
 
               {/* Word-by-word Floating Dropdown: Only appears when typed 2+ characters */}
               {searchQuery.trim().length >= 2 && (
-                <div className="absolute top-full left-4 right-4 mt-2 bg-white rounded-2xl border border-[#EBE6DF] shadow-2xl p-3.5 z-50 animate-in fade-in duration-150">
-                  {predictiveResults.products.length > 0 ? (
-                    <div className="space-y-2">
-                      <div className="divide-y divide-[#EBE6DF]/70">
-                        {predictiveResults.products.map((item) => {
-                          const img =
-                            item.images?.[0]?.image_url ||
-                            'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=200';
-                          const price = item.discount_price || item.price;
+                <div className="absolute top-full left-4 right-4 mt-2 bg-white rounded-2xl border border-[#EBE6DF] shadow-2xl p-4 z-50 animate-in fade-in duration-150 max-h-[80vh] overflow-y-auto">
+                  <div className="space-y-3">
+                    {/* 1. Main Search Action */}
+                    <div
+                      onClick={() => handleSearchSubmit()}
+                      className="py-2 px-3 rounded-xl bg-[#FAFAF8] hover:bg-[#F4EFEA] border border-[#EBE6DF] transition-colors flex items-center justify-between cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-2 text-xs font-semibold text-[#18181B]">
+                        <span className="text-[#C5A059]">🔍</span>
+                        <span>Search for &quot;<strong className="text-[#18181B]">{searchQuery}</strong>&quot; in All Products</span>
+                      </div>
+                      <span className="text-xs text-[#C5A059] font-bold group-hover:translate-x-0.5 transition-transform">→</span>
+                    </div>
 
-                          return (
-                            <div
-                              key={item.id}
-                              onClick={() => handleSelectSuggestion(`/product/${item.slug}`)}
-                              className="py-2 px-2.5 rounded-xl hover:bg-[#FAFAF8] transition-colors flex items-center justify-between gap-3 cursor-pointer group"
-                            >
-                              <div className="flex items-center gap-3 min-w-0">
-                                <img
-                                  src={img}
-                                  alt={item.name}
-                                  className="w-10 h-10 rounded-lg object-cover bg-[#FAFAF8] border border-[#EBE6DF] shrink-0"
-                                />
-                                <div className="min-w-0">
-                                  <p className="text-xs font-semibold text-[#18181B] group-hover:text-[#C5A059] transition-colors truncate">
-                                    {item.name}
-                                  </p>
-                                  <span className="text-[10px] uppercase font-bold text-[#9E7B32]">
-                                    {item.material}
+                    {/* 2. Matching Categories */}
+                    {predictiveResults.categories.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#71717A]">
+                          Categories:
+                        </span>
+                        {predictiveResults.categories.map((cat) => (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => handleSelectSuggestion(`/category/${cat.slug}`)}
+                            className="text-xs bg-[#FBF7EE] text-[#9E7B32] border border-[#E8D5AA] px-2.5 py-1 rounded-lg font-semibold hover:bg-[#C5A059] hover:text-white transition-colors cursor-pointer"
+                          >
+                            {cat.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* 3. Matching Products Preview */}
+                    {predictiveResults.products.length > 0 ? (
+                      <div className="space-y-1.5 pt-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#71717A] block">
+                          Top Products ({predictiveResults.total})
+                        </span>
+                        <div className="divide-y divide-[#EBE6DF]/70 border border-[#EBE6DF] rounded-xl overflow-hidden">
+                          {predictiveResults.products.map((item) => {
+                            const img =
+                              item.images?.[0]?.image_url ||
+                              'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=200';
+                            const price = item.discount_price || item.price;
+
+                            return (
+                              <div
+                                key={item.id}
+                                onClick={() => handleSelectSuggestion(`/product/${item.slug}`)}
+                                className="py-2.5 px-3 hover:bg-[#FAFAF8] transition-colors flex items-center justify-between gap-3 cursor-pointer group"
+                              >
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <img
+                                    src={img}
+                                    alt={item.name}
+                                    className="w-11 h-11 rounded-lg object-cover bg-[#FAFAF8] border border-[#EBE6DF] shrink-0"
+                                  />
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-semibold text-[#18181B] group-hover:text-[#C5A059] transition-colors truncate">
+                                      {item.name}
+                                    </p>
+                                    <span className="text-[10px] uppercase font-bold text-[#9E7B32]">
+                                      {item.material}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="text-right shrink-0">
+                                  <span className="text-xs font-bold text-[#18181B] block">
+                                    ₹{price.toLocaleString('en-IN')}
                                   </span>
                                 </div>
                               </div>
+                            );
+                          })}
+                        </div>
 
-                              <div className="text-right shrink-0">
-                                <span className="text-xs font-bold text-[#18181B] block">
-                                  ₹{price.toLocaleString('en-IN')}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
+                        {/* View all results footer */}
+                        <div className="pt-2 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleSearchSubmit()}
+                            className="w-full py-2 bg-[#18181B] hover:bg-[#C5A059] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-colors cursor-pointer"
+                          >
+                            View all {predictiveResults.total} results on search page →
+                          </button>
+                        </div>
                       </div>
-
-                      {/* View all results footer */}
-                      <div className="border-t border-[#EBE6DF] pt-2 text-center">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
-                            setSearchOpen(false);
-                          }}
-                          className="text-xs font-semibold text-[#C5A059] hover:underline cursor-pointer"
-                        >
-                          View all {predictiveResults.total} results for &quot;{searchQuery}&quot; →
-                        </button>
+                    ) : (
+                      <div className="py-3 text-center text-xs text-[#71717A]">
+                        No matching pieces found for &quot;<strong>{searchQuery}</strong>&quot;.
                       </div>
-                    </div>
-                  ) : (
-                    <div className="py-3 text-center text-xs text-[#71717A]">
-                      No jewellery found matching &quot;<strong>{searchQuery}</strong>&quot;.
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               )}
             </div>
