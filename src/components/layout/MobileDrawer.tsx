@@ -7,6 +7,7 @@ const menuSections = [
   {
     title: "Shop by Category",
     links: [
+      { label: "Home", href: "/" },
       { label: "All Jewellery", href: "/shop" },
       { label: "Necklaces & Chokers", href: "/category/necklaces" },
       { label: "Earrings & Chandbalis", href: "/category/earrings" },

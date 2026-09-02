@@ -55,6 +55,7 @@ const MenuIcon = () => (
 );
 
 const navLinks = [
+  { label: 'Home', href: '/' },
   { label: 'Shop All', href: '/shop' },
   { label: 'Necklaces', href: '/category/necklaces' },
   { label: 'Earrings', href: '/category/earrings' },
@@ -264,6 +265,14 @@ export function Header() {
               <MenuIcon />
             </button>
 
+            <Link
+              href="/"
+              className={`hidden lg:inline text-[11px] font-semibold tracking-widest uppercase transition-colors ${
+                pathname === '/' ? 'text-[#18181B] font-bold' : 'text-[#71717A] hover:text-[#18181B]'
+              }`}
+            >
+              Home
+            </Link>
             <Link
               href="/about"
               className="hidden lg:inline text-[11px] font-semibold tracking-widest uppercase text-[#71717A] hover:text-[#18181B] transition-colors"
