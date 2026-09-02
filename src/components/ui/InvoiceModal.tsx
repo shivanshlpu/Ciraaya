@@ -213,7 +213,7 @@ export function InvoiceModal({
               }`}
             >
               <FileText className="w-3.5 h-3.5 text-[#C5A059]" />
-              <span>Customer Tax Invoice (Digital)</span>
+              <span>Invoice for Customer (Digital / Send via Email)</span>
             </button>
 
             <button
@@ -226,7 +226,7 @@ export function InvoiceModal({
               }`}
             >
               <Package className="w-3.5 h-3.5 text-[#18181B]" />
-              <span>Parcel Bill (Package Slip)</span>
+              <span>Invoice for Package (Print &amp; Paste on Package)</span>
             </button>
           </div>
 

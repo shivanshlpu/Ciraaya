@@ -141,7 +141,7 @@ export default function AdminOrdersPage() {
                         }}
                         className="text-xs font-semibold text-[#9E7B32] hover:text-[#7A5E24] bg-[#FBF7EE] border border-[#E8D5AA] px-2.5 py-1 rounded-md hover:bg-[#F4EFEA] cursor-pointer"
                       >
-                        Tax Invoice
+                        📄 Customer Invoice
                       </button>
                       <button
                         onClick={() => {
@@ -150,7 +150,7 @@ export default function AdminOrdersPage() {
                         }}
                         className="text-xs font-semibold text-[#18181B] hover:text-black bg-white border border-black px-2.5 py-1 rounded-md hover:bg-gray-100 cursor-pointer shadow-2xs"
                       >
-                        📦 Parcel Bill
+                        📦 Parcel Bill (Paste on Box)
                       </button>
                     </td>
                   </tr>
