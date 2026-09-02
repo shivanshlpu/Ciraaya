@@ -1,0 +1,22 @@
+{
+  "name": "ciraaya-wa-worker",
+  "version": "1.0.0",
+  "description": "Throttled transactional WhatsApp outbound messaging worker using Baileys and Supabase Queue",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.12",
+    "@supabase/supabase-js": "^2.49.1",
+    "dotenv": "^16.4.7",
+    "pino": "^9.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.24",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
+  }
+}
