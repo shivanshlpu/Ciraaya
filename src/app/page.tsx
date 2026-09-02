@@ -1,14 +1,33 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useStore } from '@/context/StoreContext';
 import { ProductCard } from '@/components/product/ProductCard';
 import { InstagramFeed } from '@/components/home/InstagramFeed';
 import { handleImageError } from '@/lib/image-compressor';
+import { getStoredBanner, BannerConfig, DEFAULT_BANNER } from '@/lib/banner-config';
+import { Droplets, ShieldCheck, Sparkles, Truck, ArrowRight } from 'lucide-react';
 
 export default function HomePage() {
   const { products, categories } = useStore();
+  const [banner, setBanner] = useState<BannerConfig>(DEFAULT_BANNER);
+
+  // Sync banner dynamically from Admin CMS (with cross-tab reactive updates)
+  useEffect(() => {
+    setBanner(getStoredBanner());
+
+    const handleBannerUpdate = () => {
+      setBanner(getStoredBanner());
+    };
+
+    window.addEventListener('ciraaya-banner-updated', handleBannerUpdate);
+    window.addEventListener('storage', handleBannerUpdate);
+    return () => {
+      window.removeEventListener('ciraaya-banner-updated', handleBannerUpdate);
+      window.removeEventListener('storage', handleBannerUpdate);
+    };
+  }, []);
 
   const featuredProducts = products.filter((p) => p.is_featured).slice(0, 4);
   const bestsellers = products.filter((p) => p.tags?.includes('bestseller') || p.is_featured).slice(0, 4);
@@ -82,82 +101,74 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ═══ 2. Clean Hero Promo Banner ══════════════════════════════════ */}
-      <section className="py-6 sm:py-8">
+      {/* ═══ 2. Clean E-Commerce Hero Banner (Auto-Fitting Container) ═══════ */}
+      <section className="py-4 sm:py-6">
         <div className="container-main">
-          <div className="relative rounded-2xl md:rounded-3xl overflow-hidden bg-[#18181B] border border-[#27272A] text-white p-6 sm:p-10 md:p-12 shadow-sm">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-center relative z-10">
-              {/* Left Column */}
-              <div className="md:col-span-7 space-y-4 text-left">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[#E8D5AA] text-[10px] font-bold uppercase tracking-widest">
-                  <span className="w-2 h-2 rounded-full bg-[#C5A059] animate-pulse" />
-                  <span>Curated Everyday Jewellery</span>
-                </div>
+          <Link
+            href={banner.linkUrl || '/shop'}
+            className="group relative block w-full h-[230px] sm:h-[320px] md:h-[400px] lg:h-[450px] rounded-2xl md:rounded-3xl overflow-hidden border border-[#EBE6DF] shadow-xs bg-[#18181B]"
+          >
+            {/* Auto-fits any resolution/aspect ratio without stretching */}
+            <img
+              src={banner.imageUrl || DEFAULT_BANNER.imageUrl}
+              alt={banner.headline || 'CIRAAYA Jewellery'}
+              onError={handleImageError}
+              className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-102"
+              loading="eager"
+            />
 
-                <h1 className="font-serif-luxury text-3xl sm:text-4xl md:text-5xl font-normal leading-[1.1] text-white">
-                  Waterproof. <br />
-                  <span className="italic text-[#C5A059]">Anti-Tarnish.</span> Skin-Safe.
-                </h1>
+            {/* Clean Typography Overlay (if enabled by admin) */}
+            {banner.showOverlay && (
+              <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-transparent flex items-center p-6 sm:p-10 md:p-14">
+                <div className="max-w-md sm:max-w-lg space-y-3 sm:space-y-4 text-left">
+                  {banner.tagline && (
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-[#E8D5AA] text-[10px] font-bold uppercase tracking-widest">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#C5A059]" />
+                      <span>{banner.tagline}</span>
+                    </div>
+                  )}
 
-                <p className="text-[#A1A1AA] text-xs sm:text-sm max-w-lg leading-relaxed">
-                  Jewellery you never have to take off. Shower-safe, gym-proof, and hypoallergenic.
-                </p>
+                  <h1 className="font-serif-luxury text-2xl sm:text-4xl md:text-5xl font-normal leading-[1.1] text-white">
+                    {banner.headline}
+                  </h1>
 
-                <div className="flex flex-wrap items-center gap-3 pt-2">
-                  <Link
-                    href="/shop"
-                    className="ciraaya-btn ciraaya-btn-gold px-6 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl"
-                  >
-                    Shop Collection
-                  </Link>
-                  <Link
-                    href="/category/bridal"
-                    className="ciraaya-btn ciraaya-btn-outline-white px-6 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl"
-                  >
-                    Bridal Edit
-                  </Link>
-                </div>
-              </div>
+                  {banner.subtitle && (
+                    <p className="text-[#D4D4D8] text-xs sm:text-sm leading-relaxed max-w-sm sm:max-w-md line-clamp-2 sm:line-clamp-none">
+                      {banner.subtitle}
+                    </p>
+                  )}
 
-              {/* Right Column: Hero Visual */}
-              <div className="md:col-span-5 flex justify-center">
-                <div className="relative w-full max-w-sm aspect-[4/3] rounded-2xl overflow-hidden border border-white/15 shadow-xl">
-                  <img
-                    src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=800"
-                    alt="Ciraaya Waterproof Jewellery"
-                    onError={handleImageError}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4">
-                    <span className="text-xs font-bold text-white tracking-wide">
-                      Herringbone Waterproof Layer Chain • ₹999
+                  <div className="pt-1 sm:pt-2">
+                    <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#C5A059] group-hover:bg-[#9E7B32] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-colors shadow-sm">
+                      <span>{banner.buttonText || 'Shop Collection'}</span>
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                     </span>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
+            )}
+          </Link>
         </div>
       </section>
 
-      {/* ═══ 3. Trust Strip (Waterproof, Anti-Tarnish, Skin-Safe, Express) ══ */}
+      {/* ═══ 3. Trust Strip (100% SVG Icons - No AI Emojis) ═══════════════ */}
       <section className="py-2 border-b border-[#EBE6DF] bg-white">
         <div className="container-main">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 py-4 text-center">
-            <div className="flex items-center justify-center gap-2 p-2">
-              <span className="text-[#C5A059] text-base">💧</span>
+            <div className="flex items-center justify-center gap-2.5 p-2">
+              <Droplets className="w-4 h-4 text-[#C5A059]" />
               <span className="text-xs font-bold text-[#18181B]">100% Waterproof</span>
             </div>
-            <div className="flex items-center justify-center gap-2 p-2">
-              <span className="text-[#C5A059] text-base">🛡️</span>
+            <div className="flex items-center justify-center gap-2.5 p-2">
+              <ShieldCheck className="w-4 h-4 text-[#C5A059]" />
               <span className="text-xs font-bold text-[#18181B]">Anti-Tarnish Finish</span>
             </div>
-            <div className="flex items-center justify-center gap-2 p-2">
-              <span className="text-[#C5A059] text-base">🌿</span>
+            <div className="flex items-center justify-center gap-2.5 p-2">
+              <Sparkles className="w-4 h-4 text-[#C5A059]" />
               <span className="text-xs font-bold text-[#18181B]">100% Skin-Safe</span>
             </div>
-            <div className="flex items-center justify-center gap-2 p-2">
-              <span className="text-[#C5A059] text-base">🚚</span>
+            <div className="flex items-center justify-center gap-2.5 p-2">
+              <Truck className="w-4 h-4 text-[#C5A059]" />
               <span className="text-xs font-bold text-[#18181B]">Free Delivery &gt; ₹999</span>
             </div>
           </div>
@@ -178,10 +189,10 @@ export default function HomePage() {
             </div>
             <Link
               href="/shop"
-              className="text-xs font-bold text-[#18181B] hover:text-[#C5A059] transition-colors flex items-center gap-1"
+              className="text-xs font-bold text-[#18181B] hover:text-[#C5A059] transition-colors flex items-center gap-1.5"
             >
               <span>View All</span>
-              <span>→</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
@@ -226,8 +237,9 @@ export default function HomePage() {
                   <h3 className="font-bold text-xs sm:text-sm text-white group-hover:text-[#C5A059] transition-colors">
                     {cat.name}
                   </h3>
-                  <span className="text-[10px] text-[#A1A1AA] uppercase font-semibold block">
-                    Shop Now →
+                  <span className="text-[10px] text-[#A1A1AA] uppercase font-semibold flex items-center gap-1">
+                    <span>Shop Now</span>
+                    <ArrowRight className="w-3 h-3" />
                   </span>
                 </div>
               </Link>
@@ -250,10 +262,10 @@ export default function HomePage() {
             </div>
             <Link
               href="/shop?tag=bestseller"
-              className="text-xs font-bold text-[#18181B] hover:text-[#C5A059] transition-colors flex items-center gap-1"
+              className="text-xs font-bold text-[#18181B] hover:text-[#C5A059] transition-colors flex items-center gap-1.5"
             >
               <span>Explore More</span>
-              <span>→</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 

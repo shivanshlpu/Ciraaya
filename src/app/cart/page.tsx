@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
+import { ShoppingBag, Truck } from 'lucide-react';
 
 export default function CartPage() {
   const {
@@ -34,8 +35,8 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <div className="container-main py-20 md:py-28 text-center max-w-md mx-auto bg-[#FAFAF8]">
-        <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-white border border-[#EBE6DF] flex items-center justify-center text-3xl shadow-xs">
-          🛍️
+        <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-white border border-[#EBE6DF] flex items-center justify-center shadow-xs">
+          <ShoppingBag className="w-8 h-8 text-[#C5A059]" />
         </div>
         <h1 className="font-serif-luxury text-2xl sm:text-3xl font-normal mb-2 text-[#18181B]">
           Your Shopping Bag is Empty
@@ -70,7 +71,7 @@ export default function CartPage() {
       {/* Free Shipping Progress Indicator */}
       {remainingForFreeShipping > 0 ? (
         <div className="ciraaya-card p-4 mb-6 bg-white flex items-center gap-3 text-xs text-[#18181B]">
-          <span className="text-xl">🚚</span>
+          <Truck className="w-5 h-5 text-[#C5A059] shrink-0" />
           <div className="flex-1">
             <span>Add <strong className="text-[#C5A059]">₹{remainingForFreeShipping.toLocaleString('en-IN')}</strong> more to unlock <strong>FREE Insured Express Shipping</strong>!</span>
             <div className="w-full bg-[#FAFAF8] border border-[#EBE6DF] h-2 rounded-full mt-2 overflow-hidden">

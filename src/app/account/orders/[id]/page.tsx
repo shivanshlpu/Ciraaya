@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useStore } from '@/context/StoreContext';
 import { Button } from '@/components/ui/Button';
 import { InvoiceModal } from '@/components/ui/InvoiceModal';
+import { Truck } from 'lucide-react';
 
 export default function OrderTrackingDetailPage({
   params,
@@ -121,7 +122,7 @@ export default function OrderTrackingDetailPage({
         </div>
 
         <div className="p-3 bg-[#FAFAF8] rounded-xl flex items-center gap-2.5 text-xs text-[#71717A] border border-[#EBE6DF]">
-          <span className="text-base">🚚</span>
+          <Truck className="w-4 h-4 text-[#C5A059] shrink-0" />
           <span>
             Dispatched via Delhivery Express Air Cargo. Fully insured against transit loss or damage.
           </span>

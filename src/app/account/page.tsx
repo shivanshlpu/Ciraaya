@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useStore } from '@/context/StoreContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useToast } from '@/components/ui/Toast';
+import { Crown, User } from 'lucide-react';
 
 export default function AccountPage() {
   const { user, isAdmin, login, logout, updateProfile } = useAuth();
@@ -51,8 +52,9 @@ export default function AccountPage() {
         {user && (
           <div className="flex items-center gap-3">
             {isAdmin && (
-              <Link href="/admin" className="ciraaya-btn ciraaya-btn-outline ciraaya-btn-sm">
-                👑 Admin Panel
+              <Link href="/admin" className="ciraaya-btn ciraaya-btn-outline ciraaya-btn-sm flex items-center gap-1.5">
+                <Crown className="w-3.5 h-3.5 text-[#C5A059]" />
+                <span>Admin Panel</span>
               </Link>
             )}
             <button
@@ -67,8 +69,8 @@ export default function AccountPage() {
 
       {!user ? (
         <div className="ciraaya-card p-8 md:p-10 max-w-md mx-auto text-center bg-white space-y-4">
-          <div className="w-12 h-12 rounded-full bg-[#FBF7EE] text-[#9E7B32] flex items-center justify-center mx-auto text-xl">
-            👑
+          <div className="w-12 h-12 rounded-full bg-[#FBF7EE] text-[#9E7B32] flex items-center justify-center mx-auto border border-[#E8D5AA]">
+            <Crown className="w-5 h-5 text-[#C5A059]" />
           </div>
           <h2 className="font-serif-luxury text-xl font-normal text-[#18181B]">Welcome to CIRAAYA</h2>
           <p className="text-[#71717A] text-xs leading-relaxed">
@@ -107,15 +109,17 @@ export default function AccountPage() {
             <div className="flex justify-center gap-2">
               <button
                 onClick={() => login('customer@example.com', 'password')}
-                className="text-[11px] bg-[#FAFAF8] border border-[#EBE6DF] hover:border-[#C5A059] px-3 py-1 rounded-md font-medium cursor-pointer"
+                className="text-[11px] bg-[#FAFAF8] border border-[#EBE6DF] hover:border-[#C5A059] px-3 py-1 rounded-md font-medium cursor-pointer flex items-center gap-1"
               >
-                👤 Customer
+                <User className="w-3 h-3 text-[#71717A]" />
+                <span>Customer</span>
               </button>
               <button
                 onClick={() => login('admin@ciraaya.com', 'password')}
-                className="text-[11px] bg-[#FBF7EE] border border-[#E8D5AA] text-[#9E7B32] hover:bg-[#C5A059] hover:text-white px-3 py-1 rounded-md font-bold cursor-pointer"
+                className="text-[11px] bg-[#FBF7EE] border border-[#E8D5AA] text-[#9E7B32] hover:bg-[#C5A059] hover:text-white px-3 py-1 rounded-md font-bold cursor-pointer flex items-center gap-1"
               >
-                👑 Store Admin
+                <Crown className="w-3 h-3 text-[#C5A059]" />
+                <span>Store Admin</span>
               </button>
             </div>
           </div>

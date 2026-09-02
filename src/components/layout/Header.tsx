@@ -468,10 +468,15 @@ export function Header() {
                       className="py-2 px-3 rounded-xl bg-[#FAFAF8] hover:bg-[#F4EFEA] border border-[#EBE6DF] transition-colors flex items-center justify-between cursor-pointer group"
                     >
                       <div className="flex items-center gap-2 text-xs font-semibold text-[#18181B]">
-                        <span className="text-[#C5A059]">🔍</span>
+                        <span className="text-[#C5A059] shrink-0"><SearchIcon /></span>
                         <span>Search for &quot;<strong className="text-[#18181B]">{searchQuery}</strong>&quot; in All Products</span>
                       </div>
-                      <span className="text-xs text-[#C5A059] font-bold group-hover:translate-x-0.5 transition-transform">→</span>
+                      <span className="text-xs text-[#C5A059] font-bold group-hover:translate-x-0.5 transition-transform">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                          <polyline points="12 5 19 12 12 19" />
+                        </svg>
+                      </span>
                     </div>
 
                     {/* 2. Matching Categories */}

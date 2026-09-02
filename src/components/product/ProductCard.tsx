@@ -8,6 +8,8 @@ import { useWishlist } from '@/context/WishlistContext';
 import { useCart } from '@/context/CartContext';
 import { handleImageError, DEFAULT_FALLBACK_IMAGE } from '@/lib/image-compressor';
 
+import { Star } from 'lucide-react';
+
 interface ProductCardProps {
   product: Product;
   priorityImage?: boolean;
@@ -134,7 +136,7 @@ export function ProductCard({ product, priorityImage = false }: ProductCardProps
               {product.material}
             </span>
             <div className="flex items-center gap-1 text-[11px] text-[#71717A] font-medium">
-              <span className="text-[#C5A059] font-bold">★</span>
+              <Star className="w-2.5 h-2.5 fill-[#C5A059] text-[#C5A059]" />
               <span className="text-[#18181B] font-bold">{product.rating.toFixed(1)}</span>
               <span className="text-[10px]">({product.review_count})</span>
             </div>
