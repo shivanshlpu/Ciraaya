@@ -4,18 +4,24 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { compressImageFile, handleImageError } from '@/lib/image-compressor';
-import { getStoredBanner, saveStoredBanner, BannerConfig, DEFAULT_BANNER } from '@/lib/banner-config';
-import { Upload, RefreshCw, ExternalLink, Eye, CheckCircle2, ArrowRight } from 'lucide-react';
+import { getStoredSlides, saveStoredSlides, BannerSlide, DEFAULT_SLIDES } from '@/lib/banner-config';
+import { Upload, RefreshCw, ExternalLink, Trash2, Plus, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const INSTAGRAM_PROFILE_URL = 'https://www.instagram.com/ciraaya.in';
 
 export default function AdminHomepageCMSPage() {
   const { addToast } = useToast();
 
-  // Banner State
-  const [banner, setBanner] = useState<BannerConfig>(DEFAULT_BANNER);
+  // Multi-Slide Banner State
+  const [slides, setSlides] = useState<BannerSlide[]>(DEFAULT_SLIDES);
+  const [previewIndex, setPreviewIndex] = useState(0);
   const [isCompressing, setIsCompressing] = useState(false);
   const [compressionStatus, setCompressionStatus] = useState<string | null>(null);
+
+  // New Slide Form State
+  const [newSlideUrl, setNewSlideUrl] = useState('');
+  const [newSlideLink, setNewSlideLink] = useState('/shop');
+  const [newSlideTitle, setNewSlideTitle] = useState('');
 
   // Announcement Bar
   const [announcementText, setAnnouncementText] = useState(
@@ -28,7 +34,7 @@ export default function AdminHomepageCMSPage() {
   const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
-    setBanner(getStoredBanner());
+    setSlides(getStoredSlides());
     const savedCMS = localStorage.getItem('ciraaya_homepage_cms');
     if (savedCMS) {
       try {
@@ -53,13 +59,20 @@ export default function AdminHomepageCMSPage() {
       const originalMb = (file.size / (1024 * 1024)).toFixed(1);
       const compressedKb = Math.round(result.compressedSizeBytes / 1024);
 
-      setBanner((prev) => ({
-        ...prev,
+      const newSlide: BannerSlide = {
+        id: `slide-${Date.now()}`,
         imageUrl: result.dataUrl,
-      }));
+        linkUrl: newSlideLink || '/shop',
+        title: newSlideTitle || 'New Promotional Jewellery Banner',
+      };
+
+      const updated = [...slides, newSlide];
+      setSlides(updated);
+      saveStoredSlides(updated);
 
       setCompressionStatus(`✓ Compressed: ${originalMb}MB ➔ ${compressedKb}KB (${result.compressionRatio}% saved)`);
-      addToast('Banner image uploaded and auto-compressed successfully!', 'success');
+      addToast('New banner image uploaded, compressed and added to slider!', 'success');
+      setNewSlideTitle('');
     } catch (err) {
       console.error(err);
       addToast('Failed to compress banner image.', 'error');
@@ -68,14 +81,45 @@ export default function AdminHomepageCMSPage() {
     }
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleAddUrlSlide = () => {
+    if (!newSlideUrl.trim()) return;
+
+    const newSlide: BannerSlide = {
+      id: `slide-${Date.now()}`,
+      imageUrl: newSlideUrl.trim(),
+      linkUrl: newSlideLink || '/shop',
+      title: newSlideTitle || 'Curated Jewellery Banner',
+    };
+
+    const updated = [...slides, newSlide];
+    setSlides(updated);
+    saveStoredSlides(updated);
+
+    setNewSlideUrl('');
+    setNewSlideTitle('');
+    addToast('Slide added to carousel successfully!', 'success');
+  };
+
+  const handleDeleteSlide = (id: string) => {
+    if (slides.length <= 1) {
+      addToast('At least 1 banner slide must remain in the carousel.', 'error');
+      return;
+    }
+    const updated = slides.filter((s) => s.id !== id);
+    setSlides(updated);
+    saveStoredSlides(updated);
+    setPreviewIndex((prev) => Math.min(prev, updated.length - 1));
+    addToast('Slide removed.', 'info');
+  };
+
+  const handleSaveAll = (e: React.FormEvent) => {
     e.preventDefault();
-    saveStoredBanner(banner);
+    saveStoredSlides(slides);
     localStorage.setItem(
       'ciraaya_homepage_cms',
       JSON.stringify({ announcementText, igHandle, igToken })
     );
-    addToast('Homepage banner & storefront settings updated live!', 'success');
+    addToast('Homepage carousel & announcement settings saved live!', 'success');
   };
 
   const handleSyncInstagram = async () => {
@@ -102,186 +146,205 @@ export default function AdminHomepageCMSPage() {
           Storefront CMS
         </span>
         <h1 className="text-xl sm:text-2xl font-bold text-[#18181B]">
-          Homepage Banner &amp; Content Management
+          Homepage Banner Slider &amp; Content Management
         </h1>
         <p className="text-xs text-[#71717A] mt-1">
-          Upload any banner image—it automatically fits responsively without stretching or distortion.
+          Manage pure visual banner images for your auto-timer carousel (Flipkart / Amazon style).
         </p>
       </div>
 
-      <form onSubmit={handleSave} className="space-y-6">
-        {/* ═══ 1. Hero Banner Manager ══════════════════════════════ */}
-        <div className="ciraaya-card p-6 md:p-8 bg-white space-y-5 border border-[#EBE6DF]">
+      <form onSubmit={handleSaveAll} className="space-y-6">
+        {/* ═══ 1. Carousel Slider Manager ═════════════════════════ */}
+        <div className="ciraaya-card p-6 md:p-8 bg-white space-y-6 border border-[#EBE6DF]">
           <div className="flex items-center justify-between border-b border-[#EBE6DF] pb-3">
             <div>
-              <h3 className="font-bold text-sm text-[#18181B]">Main Storefront Banner</h3>
+              <h3 className="font-bold text-sm text-[#18181B]">
+                Hero Banner Carousel ({slides.length} Slides)
+              </h3>
               <p className="text-[11px] text-[#71717A]">
-                Whatever photo size you upload, our responsive engine auto-fits it with zero distortion.
+                Pure image slides with auto-play timer. Images auto-fit responsively without distortion.
               </p>
             </div>
             <span className="text-[10px] font-bold text-[#2A7A4C] bg-[#EFF8F2] border border-[#C4E3CE] px-2.5 py-0.5 rounded-full flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" /> Auto-Fit Active
+              <CheckCircle2 className="w-3 h-3" /> Auto-Timer Carousel Active
             </span>
           </div>
 
-          {/* Banner Live Preview */}
+          {/* Live Slider Preview */}
           <div className="space-y-2">
-            <label className="text-xs font-bold text-[#18181B] flex items-center gap-1.5">
-              <Eye className="w-3.5 h-3.5 text-[#C5A059]" />
-              <span>Live Banner Preview (Auto-Fitting Container)</span>
-            </label>
-            <div className="relative w-full h-52 sm:h-64 rounded-2xl overflow-hidden border border-[#EBE6DF] bg-[#18181B] shadow-inner">
-              <img
-                src={banner.imageUrl || DEFAULT_BANNER.imageUrl}
-                alt="Banner Preview"
-                onError={handleImageError}
-                className="w-full h-full object-cover object-center"
-              />
+            <div className="flex items-center justify-between text-xs font-semibold text-[#18181B]">
+              <span>Live Carousel Preview</span>
+              <span className="text-[#71717A]">Slide {previewIndex + 1} of {slides.length}</span>
+            </div>
 
-              {banner.showOverlay && (
-                <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-transparent flex items-center p-6 sm:p-8">
-                  <div className="max-w-sm space-y-2 text-left">
-                    {banner.tagline && (
-                      <span className="text-[9px] uppercase tracking-widest font-bold text-[#E8D5AA] bg-white/10 px-2 py-0.5 rounded">
-                        {banner.tagline}
-                      </span>
-                    )}
-                    <h2 className="text-xl sm:text-2xl font-bold text-white leading-tight font-serif-luxury">
-                      {banner.headline}
-                    </h2>
-                    {banner.subtitle && (
-                      <p className="text-[11px] text-[#D4D4D8] line-clamp-2">
-                        {banner.subtitle}
-                      </p>
-                    )}
-                    <div className="pt-1">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#C5A059] text-white text-[11px] font-bold uppercase rounded-lg">
-                        <span>{banner.buttonText || 'Shop Collection'}</span>
-                        <ArrowRight className="w-3 h-3" />
+            <div className="relative w-full h-44 sm:h-64 rounded-2xl overflow-hidden border border-[#EBE6DF] bg-[#FAFAF8] shadow-inner group">
+              {slides[previewIndex] && (
+                <img
+                  src={slides[previewIndex].imageUrl}
+                  alt={slides[previewIndex].title || 'Banner Preview'}
+                  onError={handleImageError}
+                  className="w-full h-full object-cover object-center transition-all duration-500"
+                />
+              )}
+
+              {/* Prev / Next controls in preview */}
+              {slides.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1))}
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 text-[#18181B] flex items-center justify-center shadow-md cursor-pointer hover:bg-white"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewIndex((prev) => (prev + 1) % slides.length)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 text-[#18181B] flex items-center justify-center shadow-md cursor-pointer hover:bg-white"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </>
+              )}
+
+              {/* Dots in preview */}
+              <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-full">
+                {slides.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setPreviewIndex(idx)}
+                    className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                      idx === previewIndex ? 'w-5 bg-[#C5A059]' : 'w-1.5 bg-white/60'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Current Slides List */}
+          <div className="space-y-3 pt-2">
+            <h4 className="text-xs font-bold text-[#18181B]">Current Carousel Slides</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {slides.map((slide, idx) => (
+                <div
+                  key={slide.id || idx}
+                  className="p-3 rounded-xl border border-[#EBE6DF] bg-[#FAFAF8] flex items-center justify-between gap-3"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <img
+                      src={slide.imageUrl}
+                      alt={`Slide ${idx + 1}`}
+                      onError={handleImageError}
+                      className="w-16 h-10 rounded-lg object-cover border border-[#EBE6DF] bg-white shrink-0"
+                    />
+                    <div className="min-w-0 text-xs">
+                      <p className="font-bold text-[#18181B] truncate">Slide {idx + 1}</p>
+                      <span className="text-[10px] text-[#71717A] truncate block">
+                        Link: {slide.linkUrl}
                       </span>
                     </div>
                   </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewIndex(idx)}
+                      className="text-[11px] font-semibold text-[#C5A059] hover:underline cursor-pointer"
+                    >
+                      Preview
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteSlide(slide.id)}
+                      className="w-7 h-7 rounded-lg text-[#C53030] hover:bg-red-50 flex items-center justify-center cursor-pointer"
+                      title="Delete slide"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
-              )}
+              ))}
             </div>
           </div>
 
-          {/* Image Upload & URL input */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-            <div>
-              <label className="text-xs font-semibold text-[#18181B] block mb-1">
-                Upload New Banner (From Phone or PC)
-              </label>
-              <label className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-dashed border-[#C5A059] bg-[#FBF7EE] rounded-xl text-xs font-semibold text-[#9E7B32] hover:bg-[#F5EAD4] transition-colors cursor-pointer">
-                <Upload className="w-4 h-4" />
-                <span>{isCompressing ? 'Compressing to WebP...' : 'Choose Banner Image'}</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  disabled={isCompressing}
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-              </label>
-              {compressionStatus && (
-                <p className="text-[11px] text-[#2A7A4C] font-semibold mt-1">{compressionStatus}</p>
-              )}
+          {/* Add New Slide Controls */}
+          <div className="p-4 bg-[#FAFAF8] rounded-xl border border-[#EBE6DF] space-y-3">
+            <h4 className="text-xs font-bold text-[#18181B] flex items-center gap-1.5">
+              <Plus className="w-3.5 h-3.5 text-[#C5A059]" />
+              <span>Add Another Image to Slider</span>
+            </h4>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-[#18181B] block mb-1">
+                  Upload Photo from Phone / PC
+                </label>
+                <label className="w-full flex items-center justify-center gap-2 py-2.5 px-3 border border-dashed border-[#C5A059] bg-white rounded-xl text-xs font-semibold text-[#9E7B32] hover:bg-[#FBF7EE] transition-colors cursor-pointer">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{isCompressing ? 'Compressing to WebP...' : 'Choose Banner Photo'}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={isCompressing}
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-[#18181B] block mb-1">
+                  Or Paste Image URL (Unsplash / CDN)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={newSlideUrl}
+                    onChange={(e) => setNewSlideUrl(e.target.value)}
+                    placeholder="https://images.unsplash.com/..."
+                    className="ciraaya-input text-xs flex-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddUrlSlide}
+                    className="px-3 py-1.5 bg-[#18181B] text-white rounded-lg text-xs font-semibold hover:bg-[#C5A059] transition-colors cursor-pointer"
+                  >
+                    + Add
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-[#18181B] block mb-1">
-                Or Paste Image URL (Unsplash / CDN)
-              </label>
-              <input
-                type="url"
-                value={banner.imageUrl}
-                onChange={(e) => setBanner({ ...banner, imageUrl: e.target.value })}
-                placeholder="https://images.unsplash.com/..."
-                className="ciraaya-input text-xs"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div>
+                <label className="text-xs font-semibold text-[#18181B] block mb-1">Slide Target Link</label>
+                <input
+                  type="text"
+                  value={newSlideLink}
+                  onChange={(e) => setNewSlideLink(e.target.value)}
+                  placeholder="e.g. /shop, /category/earrings, /category/bridal"
+                  className="ciraaya-input text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-[#18181B] block mb-1">Slide Label / Title</label>
+                <input
+                  type="text"
+                  value={newSlideTitle}
+                  onChange={(e) => setNewSlideTitle(e.target.value)}
+                  placeholder="e.g. Festive & Bridal Choker Collection"
+                  className="ciraaya-input text-xs"
+                />
+              </div>
             </div>
+
+            {compressionStatus && (
+              <p className="text-[11px] text-[#2A7A4C] font-semibold">{compressionStatus}</p>
+            )}
           </div>
-
-          {/* Overlay Toggle */}
-          <div className="pt-2 flex items-center justify-between p-3.5 bg-[#FAFAF8] rounded-xl border border-[#EBE6DF]">
-            <div>
-              <span className="font-semibold text-xs text-[#18181B] block">
-                Show Text &amp; Button Overlay on Banner
-              </span>
-              <span className="text-[11px] text-[#71717A]">
-                Turn OFF if your uploaded image already has text designed into it (e.g. promotional sale poster).
-              </span>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={banner.showOverlay}
-                onChange={(e) => setBanner({ ...banner, showOverlay: e.target.checked })}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C5A059]"></div>
-            </label>
-          </div>
-
-          {/* Banner Text Customization */}
-          {banner.showOverlay && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-              <div>
-                <label className="text-xs font-semibold text-[#18181B] block mb-1">Tagline Pill</label>
-                <input
-                  type="text"
-                  value={banner.tagline}
-                  onChange={(e) => setBanner({ ...banner, tagline: e.target.value })}
-                  placeholder="e.g. CURATED EVERYDAY JEWELLERY"
-                  className="ciraaya-input text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-[#18181B] block mb-1">Headline</label>
-                <input
-                  type="text"
-                  value={banner.headline}
-                  onChange={(e) => setBanner({ ...banner, headline: e.target.value })}
-                  placeholder="e.g. Waterproof. Anti-Tarnish. Skin-Safe."
-                  className="ciraaya-input text-xs font-semibold"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="text-xs font-semibold text-[#18181B] block mb-1">Subtitle</label>
-                <input
-                  type="text"
-                  value={banner.subtitle}
-                  onChange={(e) => setBanner({ ...banner, subtitle: e.target.value })}
-                  placeholder="e.g. Jewellery you never have to take off. Shower-safe & hypoallergenic."
-                  className="ciraaya-input text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-[#18181B] block mb-1">Button Label</label>
-                <input
-                  type="text"
-                  value={banner.buttonText}
-                  onChange={(e) => setBanner({ ...banner, buttonText: e.target.value })}
-                  placeholder="e.g. Shop Collection"
-                  className="ciraaya-input text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-[#18181B] block mb-1">Button Link URL</label>
-                <input
-                  type="text"
-                  value={banner.linkUrl}
-                  onChange={(e) => setBanner({ ...banner, linkUrl: e.target.value })}
-                  placeholder="e.g. /shop or /category/bridal"
-                  className="ciraaya-input text-xs"
-                />
-              </div>
-            </div>
-          )}
         </div>
 
         {/* ═══ 2. Top Announcement Bar ════════════════════════════ */}
@@ -289,7 +352,7 @@ export default function AdminHomepageCMSPage() {
           <h3 className="font-bold text-sm text-[#18181B] border-b border-[#EBE6DF] pb-2">
             Top Announcement Bar
           </h3>
-          <label className="text-xs font-semibold text-[#18181B] block mb-1">Announcement Copy</label>
+          <label className="text-xs font-semibold text-[#18181B] block mb-1">Announcement Text</label>
           <input
             type="text"
             value={announcementText}
@@ -300,7 +363,7 @@ export default function AdminHomepageCMSPage() {
 
         <div className="flex gap-3">
           <Button type="submit" size="sm">
-            Save &amp; Update Live Storefront
+            Save All Storefront Changes
           </Button>
         </div>
       </form>

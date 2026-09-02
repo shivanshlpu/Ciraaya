@@ -1,49 +1,65 @@
 /**
- * CIRAAYA Hero Banner Configuration & Storage Helper
+ * CIRAAYA Hero Banner Carousel & Multi-Slide Storage Helper
  */
 
-export interface BannerConfig {
+export interface BannerSlide {
+  id: string;
   imageUrl: string;
   linkUrl: string;
-  showOverlay: boolean;
-  tagline: string;
-  headline: string;
-  subtitle: string;
-  buttonText: string;
+  title?: string;
 }
 
-export const DEFAULT_BANNER: BannerConfig = {
-  imageUrl: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=1600',
-  linkUrl: '/shop',
-  showOverlay: true,
-  tagline: 'Curated Everyday Jewellery',
-  headline: 'Waterproof. Anti-Tarnish. Skin-Safe.',
-  subtitle: 'Jewellery you never have to take off. Shower-safe, gym-proof & hypoallergenic.',
-  buttonText: 'Shop Collection',
-};
+export const DEFAULT_SLIDES: BannerSlide[] = [
+  {
+    id: 'slide-1',
+    imageUrl: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=1600',
+    linkUrl: '/shop',
+    title: 'Waterproof & Anti-Tarnish Daily Chains',
+  },
+  {
+    id: 'slide-2',
+    imageUrl: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&q=80&w=1600',
+    linkUrl: '/category/earrings',
+    title: 'Aesthetic Everyday Hoops & Studs',
+  },
+  {
+    id: 'slide-3',
+    imageUrl: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&q=80&w=1600',
+    linkUrl: '/category/rings',
+    title: 'Never-Turn-Green Stacking Rings',
+  },
+  {
+    id: 'slide-4',
+    imageUrl: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&q=80&w=1600',
+    linkUrl: '/category/bridal',
+    title: 'Regal Bridal & Festive Choker Sets',
+  },
+];
 
-export const BANNER_STORAGE_KEY = 'ciraaya_homepage_banner';
+export const SLIDES_STORAGE_KEY = 'ciraaya_banner_slides';
 
-export function getStoredBanner(): BannerConfig {
-  if (typeof window === 'undefined') return DEFAULT_BANNER;
+export function getStoredSlides(): BannerSlide[] {
+  if (typeof window === 'undefined') return DEFAULT_SLIDES;
   try {
-    const saved = localStorage.getItem(BANNER_STORAGE_KEY);
+    const saved = localStorage.getItem(SLIDES_STORAGE_KEY);
     if (saved) {
-      return { ...DEFAULT_BANNER, ...JSON.parse(saved) };
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
     }
   } catch (err) {
-    console.error('Failed to parse banner config:', err);
+    console.error('Failed to parse banner slides:', err);
   }
-  return DEFAULT_BANNER;
+  return DEFAULT_SLIDES;
 }
 
-export function saveStoredBanner(config: BannerConfig): void {
+export function saveStoredSlides(slides: BannerSlide[]): void {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(BANNER_STORAGE_KEY, JSON.stringify(config));
-    // Dispatch storage event for instant cross-tab or same-window reactive updates
-    window.dispatchEvent(new Event('ciraaya-banner-updated'));
+    localStorage.setItem(SLIDES_STORAGE_KEY, JSON.stringify(slides));
+    window.dispatchEvent(new Event('ciraaya-slides-updated'));
   } catch (err) {
-    console.error('Failed to save banner config:', err);
+    console.error('Failed to save banner slides:', err);
   }
 }

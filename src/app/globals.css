@@ -249,6 +249,16 @@ a {
   font-style: normal;
 }
 
+/* Seamless search input reset */
+.search-input-seamless,
+.search-input-seamless:focus,
+.search-input-seamless:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
 /* ─── Badges & Tags ──────────────────────────────────────────────── */
 .ciraaya-badge-gold {
   background-color: #FBF7EE;

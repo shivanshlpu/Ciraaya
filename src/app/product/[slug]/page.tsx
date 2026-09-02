@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, use } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/context/StoreContext';
@@ -69,6 +69,19 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
     rating: 5,
     comment: '',
   });
+
+  // Record to recently viewed history (Flipkart / Amazon style)
+  useEffect(() => {
+    if (product) {
+      try {
+        const saved = JSON.parse(localStorage.getItem('ciraaya_recently_viewed') || '[]');
+        const filtered = saved.filter((id: string) => id !== product.id);
+        const updated = [product.id, ...filtered].slice(0, 8);
+        localStorage.setItem('ciraaya_recently_viewed', JSON.stringify(updated));
+        window.dispatchEvent(new Event('ciraaya-recently-viewed-updated'));
+      } catch {}
+    }
+  }, [product]);
 
   if (!product) {
     return (

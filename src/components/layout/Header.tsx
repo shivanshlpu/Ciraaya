@@ -401,7 +401,8 @@ export function Header() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search curated pieces (e.g. waterproof necklace, hoops, rings)..."
-                  className="flex-1 bg-transparent border-none text-xs sm:text-sm text-[#18181B] placeholder:text-[#A1A1AA] outline-none focus:outline-none focus:ring-0 px-1"
+                  className="search-input-seamless flex-1 bg-transparent border-0 outline-none ring-0 shadow-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 text-xs sm:text-sm text-[#18181B] placeholder:text-[#A1A1AA] px-1"
+                  style={{ outline: 'none', boxShadow: 'none', border: 'none' }}
                 />
 
                 {/* Clear button if typed */}
