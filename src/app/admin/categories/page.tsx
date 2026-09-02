@@ -4,35 +4,92 @@ import React, { useState } from 'react';
 import { useStore } from '@/context/StoreContext';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
+import { compressImageFile, handleImageError } from '@/lib/image-compressor';
+import { Category } from '@/types/database';
+import { Upload } from 'lucide-react';
 
 export default function AdminCategoriesPage() {
-  const { categories, addCategory, deleteCategory } = useStore();
+  const { categories, addCategory, updateCategory, deleteCategory } = useStore();
   const { addToast } = useToast();
 
-  const [showAdd, setShowAdd] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+
   const [name, setName] = useState('');
+  const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [isCompressing, setIsCompressing] = useState(false);
+  const [compressionStatus, setCompressionStatus] = useState<string | null>(null);
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleOpenAdd = () => {
+    setEditingCategoryId(null);
+    setName('');
+    setSlug('');
+    setDescription('');
+    setImageUrl('https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=800');
+    setCompressionStatus(null);
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (cat: Category) => {
+    setEditingCategoryId(cat.id);
+    setName(cat.name);
+    setSlug(cat.slug);
+    setDescription(cat.description || '');
+    setImageUrl(cat.image_url || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=800');
+    setCompressionStatus(null);
+    setShowModal(true);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsCompressing(true);
+    setCompressionStatus('Compressing image...');
+
+    try {
+      const result = await compressImageFile(file, 800, 800, 0.82);
+      setImageUrl(result.dataUrl);
+      setCompressionStatus(`✓ Compressed to ${Math.round(result.compressedSizeBytes / 1024)}KB`);
+      addToast('Category image uploaded and compressed!', 'success');
+    } catch {
+      addToast('Failed to compress image.', 'error');
+    } finally {
+      setIsCompressing(false);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const computedSlug = (slug.trim() || name.trim())
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
 
-    addCategory({
-      name: name.trim(),
-      slug,
-      description: description.trim() || undefined,
-      image_url: imageUrl.trim() || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=800',
-      sort_order: categories.length + 1,
-    });
+    if (editingCategoryId) {
+      updateCategory(editingCategoryId, {
+        name: name.trim(),
+        slug: computedSlug,
+        description: description.trim() || undefined,
+        image_url: imageUrl.trim() || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=800',
+      });
+      addToast(`Category "${name}" updated and reflected across website!`, 'success');
+    } else {
+      addCategory({
+        name: name.trim(),
+        slug: computedSlug,
+        description: description.trim() || undefined,
+        image_url: imageUrl.trim() || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=800',
+        sort_order: categories.length + 1,
+      });
+      addToast(`Category "${name}" created and reflected across website!`, 'success');
+    }
 
-    addToast(`Category "${name}" created!`, 'success');
-    setShowAdd(false);
-    setName('');
-    setDescription('');
-    setImageUrl('');
+    setShowModal(false);
   };
 
   return (
@@ -47,11 +104,11 @@ export default function AdminCategoriesPage() {
             Categories ({categories.length})
           </h1>
           <p className="text-xs text-[#71717A] mt-1">
-            Organize fine jewellery collections, galleries, and navigation taxonomies.
+            Changes made here immediately update in the store navigation, homepage, and shop filters.
           </p>
         </div>
 
-        <Button onClick={() => setShowAdd(true)} size="sm">
+        <Button onClick={handleOpenAdd} size="sm">
           + Add Category
         </Button>
       </div>
@@ -61,11 +118,16 @@ export default function AdminCategoriesPage() {
         {categories.map((cat) => (
           <div
             key={cat.id}
-            className="ciraaya-card overflow-hidden bg-white flex flex-col justify-between"
+            className="ciraaya-card overflow-hidden bg-white flex flex-col justify-between border border-[#EBE6DF] hover:border-[#C5A059] transition-all"
           >
             <div className="h-44 bg-[#FAFAF8] overflow-hidden relative">
               {cat.image_url && (
-                <img src={cat.image_url} alt={cat.name} className="w-full h-full object-cover" />
+                <img
+                  src={cat.image_url}
+                  alt={cat.name}
+                  onError={handleImageError}
+                  className="w-full h-full object-cover"
+                />
               )}
               <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-xs text-[11px] font-mono font-bold px-2.5 py-1 rounded-md border border-[#EBE6DF]">
                 /{cat.slug}
@@ -78,12 +140,20 @@ export default function AdminCategoriesPage() {
                   {cat.description || 'No description added.'}
                 </p>
               </div>
-              <div className="pt-3 border-t border-[#EBE6DF] flex justify-end">
+              <div className="pt-3 border-t border-[#EBE6DF] flex items-center justify-between">
                 <button
+                  type="button"
+                  onClick={() => handleOpenEdit(cat)}
+                  className="text-xs text-[#C5A059] font-semibold hover:underline cursor-pointer"
+                >
+                  Edit Category
+                </button>
+                <button
+                  type="button"
                   onClick={() => {
-                    if (confirm(`Delete category "${cat.name}"?`)) {
+                    if (confirm(`Delete category "${cat.name}"? It will be removed from navigation and shop.`)) {
                       deleteCategory(cat.id);
-                      addToast('Category deleted.', 'info');
+                      addToast(`Category "${cat.name}" deleted.`, 'info');
                     }
                   }}
                   className="text-xs text-[#C53030] font-medium hover:underline cursor-pointer"
@@ -96,12 +166,23 @@ export default function AdminCategoriesPage() {
         ))}
       </div>
 
-      {/* Add Modal */}
-      {showAdd && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#18181B]/50 backdrop-blur-xs">
+      {/* Add / Edit Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#18181B]/50 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl border border-[#EBE6DF] shadow-2xl p-6 sm:p-8 max-w-md w-full">
-            <h3 className="text-base font-bold text-[#18181B] mb-4">Add Category</h3>
-            <form onSubmit={handleAdd} className="space-y-4 text-xs">
+            <div className="flex justify-between items-center border-b border-[#EBE6DF] pb-3 mb-4">
+              <h3 className="text-base font-bold text-[#18181B]">
+                {editingCategoryId ? 'Edit Category' : 'Add Category'}
+              </h3>
+              <button
+                onClick={() => setShowModal(false)}
+                className="w-7 h-7 flex items-center justify-center rounded text-[#71717A] hover:text-[#18181B] cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4 text-xs">
               <div>
                 <label className="font-semibold text-[#18181B] block mb-1">Category Name *</label>
                 <input
@@ -109,8 +190,24 @@ export default function AdminCategoriesPage() {
                   required
                   placeholder="e.g. Mangalsutras"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (!editingCategoryId) {
+                      setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''));
+                    }
+                  }}
                   className="ciraaya-input text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="font-semibold text-[#18181B] block mb-1">URL Slug</label>
+                <input
+                  type="text"
+                  placeholder="e.g. mangalsutras"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  className="ciraaya-input text-xs font-mono"
                 />
               </div>
 
@@ -118,29 +215,59 @@ export default function AdminCategoriesPage() {
                 <label className="font-semibold text-[#18181B] block mb-1">Description</label>
                 <textarea
                   rows={2}
-                  placeholder="Brief description for SEO and category banner..."
+                  placeholder="Briefly describe pieces in this category..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="ciraaya-input text-xs resize-none"
                 />
               </div>
 
-              <div>
-                <label className="font-semibold text-[#18181B] block mb-1">Cover Image URL</label>
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/..."
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  className="ciraaya-input text-xs"
-                />
+              {/* Photo Upload or URL */}
+              <div className="p-3 bg-[#FAFAF8] rounded-xl border border-[#EBE6DF] space-y-2">
+                <label className="font-semibold text-[#18181B] block">Category Image</label>
+                <label className="w-full flex items-center justify-center gap-2 py-2 px-3 border border-dashed border-[#C5A059] bg-white rounded-xl text-xs font-semibold text-[#9E7B32] hover:bg-[#FBF7EE] transition-colors cursor-pointer">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{isCompressing ? 'Compressing...' : 'Upload Image from Phone / PC'}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={isCompressing}
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                </label>
+
+                <div>
+                  <input
+                    type="url"
+                    placeholder="Or paste image URL (Unsplash / CDN)..."
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                    className="ciraaya-input text-xs"
+                  />
+                </div>
+
+                {compressionStatus && (
+                  <p className="text-[11px] text-[#2A7A4C] font-semibold">{compressionStatus}</p>
+                )}
+
+                {imageUrl && (
+                  <div className="relative h-24 rounded-lg overflow-hidden border border-[#EBE6DF]">
+                    <img
+                      src={imageUrl}
+                      alt="Preview"
+                      onError={handleImageError}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
               </div>
 
-              <div className="flex gap-2 pt-2">
+              <div className="flex gap-3 pt-3">
                 <Button type="submit" fullWidth size="sm">
-                  Create Category
+                  {editingCategoryId ? 'Save Changes' : 'Create Category'}
                 </Button>
-                <Button type="button" variant="ghost" fullWidth size="sm" onClick={() => setShowAdd(false)}>
+                <Button type="button" variant="ghost" fullWidth size="sm" onClick={() => setShowModal(false)}>
                   Cancel
                 </Button>
               </div>

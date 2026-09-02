@@ -54,15 +54,7 @@ const MenuIcon = () => (
   </svg>
 );
 
-const navLinks = [
-  { label: 'Home', href: '/' },
-  { label: 'Shop All', href: '/shop' },
-  { label: 'Necklaces', href: '/category/necklaces' },
-  { label: 'Earrings', href: '/category/earrings' },
-  { label: 'Rings', href: '/category/rings' },
-  { label: 'Bangles & Bracelets', href: '/category/bangles' },
-  { label: 'Bridal & Party', href: '/category/bridal' },
-];
+
 
 export function Header() {
   const pathname = usePathname();
@@ -83,6 +75,19 @@ export function Header() {
   const { itemCount: wishCount } = useWishlist();
   const { user } = useAuth();
   const { products, categories } = useStore();
+
+  // Dynamic Navigation Links: auto-updates whenever admin modifies categories!
+  const navLinks = useMemo(() => {
+    const base = [
+      { label: 'Home', href: '/' },
+      { label: 'Shop All', href: '/shop' },
+    ];
+    const catLinks = categories.map((c) => ({
+      label: c.name,
+      href: `/category/${c.slug}`,
+    }));
+    return [...base, ...catLinks];
+  }, [categories]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 15);
@@ -359,7 +364,7 @@ export function Header() {
 
         {/* Bottom Category Bar */}
         <div className="hidden lg:block border-t border-[#EBE6DF] bg-[#FAFAF8]">
-          <div className="container-main flex items-center justify-center gap-8 xl:gap-10 h-11">
+          <div className="container-main flex items-center justify-start lg:justify-center gap-6 xl:gap-8 h-11 overflow-x-auto no-scrollbar">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
@@ -367,7 +372,7 @@ export function Header() {
                   key={link.href}
                   href={link.href}
                   className={`
-                    text-xs font-medium tracking-[0.18em] transition-colors duration-200 uppercase relative py-1
+                    text-xs font-medium tracking-[0.16em] transition-colors duration-200 uppercase relative py-1 whitespace-nowrap shrink-0
                     ${isActive ? 'text-[#18181B] font-bold' : 'text-[#71717A] hover:text-[#18181B]'}
                   `}
                 >

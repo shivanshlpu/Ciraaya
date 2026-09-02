@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useStore } from '@/context/StoreContext';
 import { ProductCard } from '@/components/product/ProductCard';
@@ -8,7 +8,7 @@ import { InstagramFeed } from '@/components/home/InstagramFeed';
 import { BannerSlider } from '@/components/home/BannerSlider';
 import { handleImageError } from '@/lib/image-compressor';
 import { Droplets, ShieldCheck, Sparkles, Truck, ArrowRight, History } from 'lucide-react';
-import { Product } from '@/types/database';
+import { Product, Category } from '@/types/database';
 
 export default function HomePage() {
   const { products, categories } = useStore();
@@ -55,44 +55,14 @@ export default function HomePage() {
   const featuredProducts = products.filter((p) => p.is_featured).slice(0, 4);
   const bestsellers = products.filter((p) => p.tags?.includes('bestseller') || p.is_featured).slice(0, 4);
 
-  // Top Flipkart-Style Circular Quick Categories
-  const quickCategories = [
-    {
-      name: 'Necklaces',
-      href: '/category/necklaces',
-      img: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=250',
-    },
-    {
-      name: 'Earrings',
-      href: '/category/earrings',
-      img: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&q=80&w=250',
-    },
-    {
-      name: 'Rings',
-      href: '/category/rings',
-      img: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&q=80&w=250',
-    },
-    {
-      name: 'Bangles',
-      href: '/category/bangles',
-      img: 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&q=80&w=250',
-    },
-    {
-      name: 'Bridal',
-      href: '/category/bridal',
-      img: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&q=80&w=250',
-    },
-    {
-      name: 'Waterproof',
-      href: '/shop?material=Waterproof',
-      img: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&q=80&w=250',
-    },
-    {
-      name: 'Bestsellers',
-      href: '/shop?tag=bestseller',
-      img: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&q=80&w=250',
-    },
-  ];
+  // Top Flipkart-Style Circular Quick Categories (100% Dynamic from Admin Categories)
+  const quickCategories = useMemo(() => {
+    return categories.map((cat) => ({
+      name: cat.name,
+      href: `/category/${cat.slug}`,
+      img: cat.image_url || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=250',
+    }));
+  }, [categories]);
 
   return (
     <div className="min-h-screen bg-[#FAFAF8]">

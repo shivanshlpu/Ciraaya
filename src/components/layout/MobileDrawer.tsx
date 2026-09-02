@@ -1,41 +1,8 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import Link from "next/link";
-
-const menuSections = [
-  {
-    title: "Shop by Category",
-    links: [
-      { label: "Home", href: "/" },
-      { label: "All Jewellery", href: "/shop" },
-      { label: "Necklaces & Chokers", href: "/category/necklaces" },
-      { label: "Earrings & Chandbalis", href: "/category/earrings" },
-      { label: "Rings & Solitaires", href: "/category/rings" },
-      { label: "Bangles & Kadas", href: "/category/bangles" },
-      { label: "Bridal Heritage", href: "/category/bridal" },
-    ],
-  },
-  {
-    title: "Curated Collections",
-    links: [
-      { label: "New Arrivals", href: "/shop?tag=new-arrival" },
-      { label: "Bestsellers", href: "/shop?tag=bestseller" },
-      { label: "Festive Glamour", href: "/shop?tag=festive" },
-      { label: "Daily Elegance", href: "/shop?tag=daily-wear" },
-    ],
-  },
-  {
-    title: "Information & Concierge",
-    links: [
-      { label: "About CIRAAYA", href: "/about" },
-      { label: "Contact Us", href: "/contact" },
-      { label: "Jewellery Care & FAQ", href: "/faq" },
-      { label: "Shipping & Delivery", href: "/shipping-delivery" },
-      { label: "Returns & Exchange", href: "/returns-exchange" },
-    ],
-  },
-];
+import { useStore } from "@/context/StoreContext";
 
 interface MobileDrawerProps {
   isOpen: boolean;
@@ -43,6 +10,8 @@ interface MobileDrawerProps {
 }
 
 export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
+  const { categories } = useStore();
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -51,6 +20,42 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
       document.body.style.overflow = "";
     };
   }, [isOpen]);
+
+  const menuSections = useMemo(
+    () => [
+      {
+        title: "Shop by Category",
+        links: [
+          { label: "Home", href: "/" },
+          { label: "All Jewellery", href: "/shop" },
+          ...categories.map((c) => ({
+            label: c.name,
+            href: `/category/${c.slug}`,
+          })),
+        ],
+      },
+      {
+        title: "Curated Collections",
+        links: [
+          { label: "New Arrivals", href: "/shop?tag=new-arrival" },
+          { label: "Bestsellers", href: "/shop?tag=bestseller" },
+          { label: "Festive Glamour", href: "/shop?tag=festive" },
+          { label: "Daily Elegance", href: "/shop?tag=daily-wear" },
+        ],
+      },
+      {
+        title: "Information & Concierge",
+        links: [
+          { label: "About CIRAAYA", href: "/about" },
+          { label: "Contact Us", href: "/contact" },
+          { label: "Jewellery Care & FAQ", href: "/faq" },
+          { label: "Shipping & Delivery", href: "/shipping-delivery" },
+          { label: "Returns & Exchange", href: "/returns-exchange" },
+        ],
+      },
+    ],
+    [categories]
+  );
 
   if (!isOpen) return null;
 
@@ -84,7 +89,7 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-[#71717A] hover:text-[#18181B] hover:bg-[#FAFAF8]"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-[#71717A] hover:text-[#18181B] hover:bg-[#FAFAF8] cursor-pointer"
             aria-label="Close menu"
           >
             ✕
@@ -119,22 +124,22 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
         <div className="p-6 border-t border-[#EBE6DF] bg-[#FAFAF8] space-y-2">
           <div className="grid grid-cols-2 gap-2">
             <Link
-              href="/account"
-              onClick={onClose}
-              className="text-center py-2 rounded-xl border border-[#EBE6DF] bg-white text-xs font-semibold text-[#18181B] hover:border-[#C5A059]"
-            >
-              My Account
-            </Link>
-            <Link
               href="/wishlist"
               onClick={onClose}
-              className="text-center py-2 rounded-xl border border-[#EBE6DF] bg-white text-xs font-semibold text-[#18181B] hover:border-[#C5A059]"
+              className="py-2 px-3 text-center bg-white border border-[#EBE6DF] rounded-xl text-xs font-semibold text-[#18181B] hover:border-[#C5A059]"
             >
               Wishlist
             </Link>
+            <Link
+              href="/cart"
+              onClick={onClose}
+              className="py-2 px-3 text-center bg-[#18181B] text-white rounded-xl text-xs font-semibold hover:bg-[#C5A059]"
+            >
+              Bag
+            </Link>
           </div>
-          <p className="text-[10px] text-center text-[#71717A] pt-2">
-            WhatsApp Support: +91 99999 99999
+          <p className="text-[10px] text-[#A1A1AA] text-center pt-2">
+            100% Waterproof &amp; Anti-Tarnish Guaranteed
           </p>
         </div>
       </div>

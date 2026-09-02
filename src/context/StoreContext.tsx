@@ -99,9 +99,37 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Listen for cross-tab or cross-window store updates
+  useEffect(() => {
+    const handleStorageChange = (e?: StorageEvent | Event) => {
+      try {
+        const savedCats = localStorage.getItem('ciraaya_categories');
+        if (savedCats) setCategories(JSON.parse(savedCats));
+
+        const savedProds = localStorage.getItem('ciraaya_products');
+        if (savedProds) setProducts(JSON.parse(savedProds));
+
+        const savedCoups = localStorage.getItem('ciraaya_coupons');
+        if (savedCoups) setCoupons(JSON.parse(savedCoups));
+      } catch (err) {
+        console.error('Failed to sync store state:', err);
+      }
+    };
+
+    window.addEventListener('ciraaya-categories-updated', handleStorageChange);
+    window.addEventListener('ciraaya-products-updated', handleStorageChange);
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('ciraaya-categories-updated', handleStorageChange);
+      window.removeEventListener('ciraaya-products-updated', handleStorageChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   const saveProducts = (updated: Product[]) => {
     setProducts(updated);
     localStorage.setItem('ciraaya_products', JSON.stringify(updated));
+    window.dispatchEvent(new Event('ciraaya-products-updated'));
   };
 
   const addProduct = (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => {
@@ -124,6 +152,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     saveProducts(updated);
   };
 
+  const saveCategories = (updated: Category[]) => {
+    setCategories(updated);
+    localStorage.setItem('ciraaya_categories', JSON.stringify(updated));
+    window.dispatchEvent(new Event('ciraaya-categories-updated'));
+  };
+
   const addCategory = (category: Omit<Category, 'id' | 'created_at'>) => {
     const newCat: Category = {
       ...category,
@@ -131,20 +165,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       created_at: new Date().toISOString(),
     };
     const updated = [...categories, newCat];
-    setCategories(updated);
-    localStorage.setItem('ciraaya_categories', JSON.stringify(updated));
+    saveCategories(updated);
   };
 
   const updateCategory = (id: string, updates: Partial<Category>) => {
     const updated = categories.map((c) => (c.id === id ? { ...c, ...updates } : c));
-    setCategories(updated);
-    localStorage.setItem('ciraaya_categories', JSON.stringify(updated));
+    saveCategories(updated);
   };
 
   const deleteCategory = (id: string) => {
     const updated = categories.filter((c) => c.id !== id);
-    setCategories(updated);
-    localStorage.setItem('ciraaya_categories', JSON.stringify(updated));
+    saveCategories(updated);
   };
 
   const addCoupon = (coupon: Omit<Coupon, 'id' | 'used_count'>) => {

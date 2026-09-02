@@ -124,6 +124,44 @@ function ShopContent() {
         </div>
       </div>
 
+      {/* ─── Horizontal Category Pills Ribbon (Dynamic from Admin) ─── */}
+      <div className="container-main mb-6">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+          <button
+            type="button"
+            onClick={() => setFilters((prev) => ({ ...prev, categorySlug: 'all' }))}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+              filters.categorySlug === 'all'
+                ? 'bg-[#18181B] text-white shadow-xs'
+                : 'bg-white text-[#71717A] border border-[#EBE6DF] hover:border-[#C5A059] hover:text-[#18181B]'
+            }`}
+          >
+            All Pieces ({products.length})
+          </button>
+          {categories.map((cat) => {
+            const isSelected = filters.categorySlug === cat.slug;
+            const count = products.filter((p) => p.category_id === cat.id).length;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setFilters((prev) => ({ ...prev, categorySlug: cat.slug }))}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                  isSelected
+                    ? 'bg-[#C5A059] text-white shadow-xs'
+                    : 'bg-white text-[#71717A] border border-[#EBE6DF] hover:border-[#C5A059] hover:text-[#18181B]'
+                }`}
+              >
+                <span>{cat.name}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isSelected ? 'bg-black/20 text-white' : 'bg-[#FAFAF8] text-[#71717A]'}`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* ─── Controls Bar ─────────────────────────────── */}
       <div className="container-main mb-6">
         <div className="p-4 bg-white rounded-xl border border-[#EBE6DF] flex flex-wrap items-center justify-between gap-4 shadow-xs">
